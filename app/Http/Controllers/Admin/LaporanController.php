@@ -16,7 +16,11 @@ class LaporanController extends Controller
     {
         // 1. Ambil input tanggal (Default: Hari Ini)
         $selectedDate = $request->tanggal ?? now()->format('Y-m-d');
-        $years = Order::selectRaw('YEAR(created_at) as year')->distinct()->pluck('year');
+        
+        // PERBAIKAN: Menggunakan EXTRACT agar jalan di PostgreSQL Railway
+        $years = Order::selectRaw('EXTRACT(YEAR FROM created_at) as year')
+            ->distinct()
+            ->pluck('year');
 
         // --- FITUR SEKALI KLIK: LAPORAN RINGKASAN ---
         
