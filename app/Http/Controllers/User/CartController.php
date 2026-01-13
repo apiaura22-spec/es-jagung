@@ -19,12 +19,19 @@ class CartController extends Controller
         return view('user.cart.index', compact('cartItems'));
     }
 
-    // ================= ADD CART =================
+    // ================= ADD CART (DIPERBARUI) =================
     public function add(Request $request, $id)
     {
         $product = Produk::findOrFail($id);
         $request->validate(['qty' => 'required|integer|min:1']);
         $cart = session()->get('cart', []);
+
+        // CEK STOK: Apakah permintaan melebihi stok yang ada di database?
+        $requestedQty = isset($cart[$id]) ? ($cart[$id]['quantity'] + $request->qty) : $request->qty;
+
+        if ($requestedQty > $product->stok) {
+            return redirect()->back()->with('error', "Maaf, stok tidak mencukupi. Sisa stok: {$product->stok}");
+        }
 
         if (isset($cart[$id])) {
             $cart[$id]['quantity'] += $request->qty;
@@ -64,12 +71,22 @@ class CartController extends Controller
         return view('user.cart.checkout', compact('cartItems', 'total', 'clientKey'));
     }
 
-    // ================= PROSES CHECKOUT =================
+    // ================= PROSES CHECKOUT (DIPERBARUI DENGAN CEK STOK AKHIR) =================
     public function processCheckout(Request $request)
     {
         $cartItems = session()->get('cart', []);
         if (empty($cartItems)) {
             return response()->json(['error' => 'Keranjang kosong'], 400);
+        }
+
+        // CEK STOK TERAKHIR: Sebelum buat order, pastikan stok masih tersedia di database
+        foreach ($cartItems as $produkId => $item) {
+            $product = Produk::find($produkId);
+            if (!$product || $product->stok < $item['quantity']) {
+                return response()->json([
+                    'error' => "Gagal checkout. Stok '{$item['name']}' tidak mencukupi atau sudah habis."
+                ], 400);
+            }
         }
 
         $total = collect($cartItems)->sum(fn($item) => $item['price'] * $item['quantity']);
@@ -123,17 +140,12 @@ class CartController extends Controller
         }
     }
 
-    // ================= DETAIL ORDER (FIX ERROR) =================
     public function showOrder($id)
     {
-        // Pastikan model Order punya relasi 'items' dan 'items' punya relasi 'produk'
         $order = Order::with('items.produk')->where('user_id', auth()->id())->findOrFail($id);
-        
-        // Pastikan folder resources/views/user/orders/show.blade.php sudah ada
         return view('user.orders.show', compact('order'));
     }
 
-    // ================= REMOVE & CLEAR =================
     public function remove($id)
     {
         $cart = session()->get('cart', []);
