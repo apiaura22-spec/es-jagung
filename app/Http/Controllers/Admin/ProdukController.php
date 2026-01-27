@@ -27,6 +27,7 @@ class ProdukController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'harga' => 'required|numeric',
+            'diskon' => 'nullable|integer|min:0|max:100',
             'stok' => 'required|integer',
             'gambar' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
         ]);
@@ -34,6 +35,7 @@ class ProdukController extends Controller
         $produk = new Produk();
         $produk->nama = $request->nama;
         $produk->harga = $request->harga;
+        $produk->diskon = $request->diskon ?? 0;
         $produk->stok = $request->stok;
 
         if ($request->hasFile('gambar')) {
@@ -60,12 +62,14 @@ class ProdukController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'harga' => 'required|numeric',
+            'diskon' => 'nullable|integer|min:0|max:100',
             'stok' => 'required|integer',
             'gambar' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
         ]);
 
         $produk->nama = $request->nama;
         $produk->harga = $request->harga;
+        $produk->diskon = $request->diskon ?? 0;
         $produk->stok = $request->stok;
 
         if ($request->hasFile('gambar')) {

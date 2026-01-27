@@ -31,7 +31,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold text-dark">Harga Satuan</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">Rp</span>
@@ -40,7 +40,17 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-dark">Diskon (%)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-percent text-muted"></i></span>
+                                    <input type="number" name="diskon" class="form-control border-start-0 ps-0 bg-light" placeholder="0" min="0" max="100" value="0">
+                                    <div class="invalid-feedback">Diskon harus antara 0-100.</div>
+                                </div>
+                                <small class="text-muted">Masukkan persentase diskon (0-100)</small>
+                            </div>
+
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold text-dark">Jumlah Stok</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-cubes text-muted"></i></span>

@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\User\MidtransController;
 use App\Models\Review;
 use App\Models\Produk;
+use App\Models\OrderItem;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,9 +28,42 @@ Route::get('/', function () {
     $reviews = Review::with('user')->latest()->take(6)->get();
     $avgRating   = round(Review::avg('rating'), 1);
     $totalReview = Review::count();
-    $products = Produk::all(); 
+    $products = Produk::all()->map(function($p) {
+        if (is_null($p->diskon)) {
+            $p->diskon = 0;
+        }
+        return $p;
+    }); 
 
-    return view('welcome', compact('reviews', 'avgRating', 'totalReview', 'products'));
+    $bestSellers = collect([]);
+    try {
+        $bestSellerItems = OrderItem::select('produk_id')
+            ->selectRaw('SUM(quantity) as total_terjual')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereIn('orders.status', ['confirmed', 'processing', 'ready_to_pickup', 'done'])
+            ->groupBy('produk_id')
+            ->orderByDesc('total_terjual')
+            ->take(3)
+            ->get();
+        
+        if ($bestSellerItems->count() > 0) {
+            $bestSellers = $bestSellerItems->map(function($item) {
+                $produk = Produk::find($item->produk_id);
+                if ($produk) {
+                    if (is_null($produk->diskon)) {
+                        $produk->diskon = 0;
+                    }
+                    $produk->total_terjual = $item->total_terjual ?? 0;
+                    return $produk;
+                }
+                return null;
+            })->filter()->values();
+        }
+    } catch (\Exception $e) {
+        $bestSellers = collect([]);
+    }
+
+    return view('welcome', compact('reviews', 'avgRating', 'totalReview', 'products', 'bestSellers'));
 })->name('home');
 
 Route::get('/produk/{id}', [UserDashboardController::class, 'show'])->name('public.produk.detail');
@@ -75,7 +109,7 @@ Route::middleware(['auth'])->prefix('user')->as('user.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ROUTE ADMIN
+| ROUTE ADMIN (HANYA BAGIAN INI YANG DIPERBARUI)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('admin')->as('admin.')->group(function () {
@@ -101,8 +135,8 @@ Route::middleware(['auth'])->prefix('admin')->as('admin.')->group(function () {
     Route::post('/expense/store', [ExpenseController::class, 'store'])->name('expense.store');
     Route::delete('/expense/{id}', [ExpenseController::class, 'destroy'])->name('expense.destroy');
 
-    // Profil Admin (DIPERBAIKI & DILENGKAPI)
-    Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
+    // Profil Admin - PENAMAAN DISESUAIKAN UNTUK LAYOUT
+    Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [AdminProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password.update');
 });

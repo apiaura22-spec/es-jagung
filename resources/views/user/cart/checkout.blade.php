@@ -39,6 +39,27 @@
         color: #000;
         font-weight: 700;
     }
+    .payment-option {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid #f1f1f1;
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 1rem;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .payment-option:hover {
+        background-color: #fffdf5;
+        border-color: #ffc107;
+    }
+    .payment-option input[type="radio"] {
+        margin-right: 15px;
+        width: 20px;
+        height: 20px;
+        accent-color: #ffc107;
+    }
 </style>
 
 <div class="container py-5">
@@ -66,16 +87,23 @@
                         </thead>
                         <tbody>
                             @foreach($cartItems as $item)
+                            @php
+                                // Cek apakah data berbentuk Object atau Array
+                                $isObject = is_object($item);
+                                $nama = $isObject ? ($item->produk->nama_produk ?? $item->name) : ($item['produk']['nama_produk'] ?? $item['name'] ?? 'Produk');
+                                $harga = $isObject ? ($item->produk->harga ?? $item->price) : ($item['produk']['harga'] ?? $item['price'] ?? 0);
+                                $qty = $isObject ? ($item->jumlah ?? $item->quantity) : ($item['jumlah'] ?? $item['quantity'] ?? 0);
+                            @endphp
                             <tr>
                                 <td class="py-3">
-                                    <span class="fw-bold text-dark">{{ $item['name'] }}</span>
+                                    <span class="fw-bold text-dark">{{ $nama }}</span>
                                 </td>
-                                <td>Rp {{ number_format($item['price'],0,',','.') }}</td>
+                                <td>Rp {{ number_format($harga, 0, ',', '.') }}</td>
                                 <td class="text-center">
-                                    <span class="badge badge-qty rounded-pill px-3">{{ $item['quantity'] }}</span>
+                                    <span class="badge badge-qty rounded-pill px-3">{{ $qty }}</span>
                                 </td>
                                 <td class="text-end fw-bold text-warning">
-                                    Rp {{ number_format($item['price'] * $item['quantity'],0,',','.') }}
+                                    Rp {{ number_format($harga * $qty, 0, ',', '.') }}
                                 </td>
                             </tr>
                             @endforeach
@@ -86,83 +114,110 @@
                 {{-- Mobile View --}}
                 <div class="d-md-none">
                     @foreach($cartItems as $item)
+                    @php
+                        $isObject = is_object($item);
+                        $nama = $isObject ? ($item->produk->nama_produk ?? $item->name) : ($item['produk']['nama_produk'] ?? $item['name'] ?? 'Produk');
+                        $harga = $isObject ? ($item->produk->harga ?? $item->price) : ($item['produk']['harga'] ?? $item['price'] ?? 0);
+                        $qty = $isObject ? ($item->jumlah ?? $item->quantity) : ($item['jumlah'] ?? $item['quantity'] ?? 0);
+                    @endphp
                     <div class="product-list-item d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="fw-bold mb-0">{{ $item['name'] }}</h6>
-                            <small class="text-muted">{{ $item['quantity'] }}x @ Rp {{ number_format($item['price'],0,',','.') }}</small>
+                            <h6 class="fw-bold mb-0">{{ $nama }}</h6>
+                            <small class="text-muted">{{ $qty }}x @ Rp {{ number_format($harga, 0, ',', '.') }}</small>
                         </div>
-                        <span class="fw-bold text-warning">Rp {{ number_format($item['price'] * $item['quantity'],0,',','.') }}</span>
+                        <span class="fw-bold text-warning">Rp {{ number_format($harga * $qty, 0, ',', '.') }}</span>
                     </div>
                     @endforeach
                 </div>
 
-                <div class="summary-box mt-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Metode Pembayaran</span>
-                        <span class="fw-bold text-dark"><i class="fas fa-shield-alt text-success me-1"></i> Midtrans Secure</span>
-                    </div>
-                    <hr class="my-3" style="border-style: dashed;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0">Total Pembayaran</h5>
-                        <h3 class="fw-black text-success mb-0">Rp {{ number_format($total,0,',','.') }}</h3>
-                    </div>
-                </div>
+                <h5 class="fw-bold mt-4">Pilih Metode Pembayaran</h5>
+<div class="mb-3">
+    <label class="d-flex align-items-center p-3 border rounded-3 mb-2" style="cursor: pointer;">
+        <input type="radio" name="payment_method" value="midtrans" id="method-midtrans" checked class="me-3">
+        <div>
+            <div class="fw-bold">Transfer / QRIS / E-Wallet</div>
+            <small class="text-muted">Bayar otomatis via Midtrans Secure</small>
+        </div>
+    </label>
+    <label class="d-flex align-items-center p-3 border rounded-3" style="cursor: pointer;">
+        <input type="radio" name="payment_method" value="cash" id="method-cash" class="me-3">
+        <div>
+            <div class="fw-bold">Bayar Tunai di Tempat (Cash)</div>
+            <small class="text-muted">Bayar saat mengambil pesanan di outlet</small>
+        </div>
+    </label>
+</div>
 
-                <button id="pay-button" class="btn btn-pay btn-lg w-100 mt-4 text-white">
-                    <i class="fas fa-lock me-2"></i> BAYAR SEKARANG
-                </button>
+<button id="pay-button" class="btn btn-success w-100 btn-lg rounded-3 fw-bold mt-3">
+    <i class="fas fa-check-circle me-2"></i> KONFIRMASI PESANAN
+</button>
                 
                 <div class="text-center mt-3">
-                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Klik tombol di atas untuk memilih metode pembayaran aman.</small>
+                    <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Pesanan diambil sendiri di outlet Es Jagung Uni Icis.</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- SCRIPT TETAP SAMA (LOGIKA JANGAN DIUBAH) --}}
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
 <script>
 document.getElementById('pay-button').onclick = function() {
-    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Menyiapkan Pembayaran...';
+    const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
+    
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
     this.disabled = true;
 
     fetch("{{ route('user.cart.checkout.process') }}", {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
             'Accept': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            payment_method: selectedMethod
+        })
     })
     .then(res => res.json())
     .then(data => {
-        this.innerHTML = '<i class="fas fa-lock me-2"></i> BAYAR SEKARANG';
-        this.disabled = false;
-
         if(data.error){
             alert(data.error);
+            this.innerHTML = '<i class="fas fa-check-circle me-2"></i> KONFIRMASI PESANAN';
+            this.disabled = false;
             return;
         }
-        snap.pay(data.snapToken, {
-            onSuccess: function(result){
+
+        if (selectedMethod === 'cash') {
+            // Jika cash, langsung redirect tanpa alert
+            if(data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
                 window.location.href = "{{ route('user.orders.index') }}";
-            },
-            onPending: function(result){
-                window.location.href = "{{ route('user.orders.index') }}";
-            },
-            onError: function(result){
-                alert("Terjadi kesalahan pada pembayaran");
-                location.reload();
-            },
-            onClose: function(){
-                alert("Anda belum menyelesaikan pembayaran.");
             }
-        });
+        } else {
+            // Jika midtrans, munculkan popup Snap
+            if(data.snapToken) {
+                snap.pay(data.snapToken, {
+                    onSuccess: function(result){ window.location.href = "{{ route('user.orders.index') }}"; },
+                    onPending: function(result){ window.location.href = "{{ route('user.orders.index') }}"; },
+                    onError: function(result){ alert("Kesalahan pembayaran"); location.reload(); },
+                    onClose: function(){ 
+                        this.innerHTML = '<i class="fas fa-check-circle me-2"></i> KONFIRMASI PESANAN';
+                        this.disabled = false;
+                    }
+                });
+            } else {
+                alert("Gagal mendapatkan token pembayaran.");
+                this.innerHTML = '<i class="fas fa-check-circle me-2"></i> KONFIRMASI PESANAN';
+                this.disabled = false;
+            }
+        }
     })
     .catch(err => {
         console.error(err);
         this.disabled = false;
-        this.innerHTML = '<i class="fas fa-lock me-2"></i> BAYAR SEKARANG';
+        this.innerHTML = '<i class="fas fa-check-circle me-2"></i> KONFIRMASI PESANAN';
     });
 };
 </script>

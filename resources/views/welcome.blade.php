@@ -153,17 +153,85 @@
     </div>
 </div>
 
-<div id="produk-kami" class="container py-5">
+@if(isset($bestSellers) && $bestSellers->count() > 0)
+<div id="best-seller" class="container py-5">
     <div class="text-center mb-5">
-        <h2 class="section-title animate__animated animate__fadeIn">Menu Favorit Uni Icis</h2>
+        <h2 class="section-title animate__animated animate__fadeIn">
+            <i class="fas fa-fire text-danger me-2"></i> Best Seller
+        </h2>
+        <p class="text-muted">Produk paling laris berdasarkan penjualan terbanyak</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        @foreach($bestSellers as $index => $product)
+        <div class="col-6 col-md-4 col-lg-3 animate__animated animate__fadeInUp" style="animation-delay: {{ $index * 0.1 }}s">
+            <div class="card custom-card shadow-sm border-0 h-100 position-relative">
+                @if($index == 0)
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-danger px-3 py-2 rounded-pill shadow animate__animated animate__pulse animate__infinite">
+                        <i class="fas fa-crown me-1"></i> #1
+                    </span>
+                </div>
+                @elseif($index == 1)
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-warning px-3 py-2 rounded-pill shadow">
+                        <i class="fas fa-medal me-1"></i> #2
+                    </span>
+                </div>
+                @elseif($index == 2)
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <span class="badge bg-info px-3 py-2 rounded-pill shadow">
+                        <i class="fas fa-award me-1"></i> #3
+                    </span>
+                </div>
+                @endif
+
+                @if($product->hasDiskon())
+                <div class="discount-strip">-{{ $product->diskon ?? 0 }}%</div>
+                @endif
+
+                <div class="card-img-container">
+                    <img src="{{ asset('produk/' . $product->gambar) }}" class="card-img-top" alt="{{ $product->nama }}" onerror="this.src='https://placehold.co/400x300?text=Produk'">
+                </div>
+                
+                <div class="card-body d-flex flex-column text-center">
+                    <h5 class="fw-bold mb-1 text-dark" style="font-size: 1.1rem;">{{ $product->nama }}</h5>
+                    <div class="mb-2">
+                        @if($product->hasDiskon())
+                        <span class="text-muted text-decoration-line-through" style="font-size: 0.85rem;">Rp {{ number_format($product->harga, 0, ',', '.') }}</span><br>
+                        @endif
+                        <span class="text-orange fw-bold h5 mb-0" style="color: var(--primary-orange);">Rp {{ number_format($product->harga_setelah_diskon, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-success fw-bold">
+                            <i class="fas fa-shopping-cart me-1"></i> Terjual: {{ $product->total_terjual }}
+                        </small>
+                    </div>
+                    <a href="{{ route('public.produk.detail', $product->id) }}" class="btn btn-outline-warning btn-sm rounded-pill mt-auto fw-bold py-2">
+                        <i class="fas fa-eye me-1"></i> Detail Menu
+                    </a>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+<div id="produk-kami" class="container py-5" style="margin-top: 4rem;">
+    <div class="text-center mb-5">
+        <h2 class="section-title animate__animated animate__fadeIn">Menu Uni Icis</h2>
+        <p class="text-muted">Pilih menu favorit Anda</p>
     </div>
 
     <div class="row g-4">
         @forelse($products as $index => $p)
         <div class="col-6 col-md-4 col-lg-3 animate__animated animate__fadeInUp" style="animation-delay: {{ $index * 0.1 }}s">
-            <div class="card custom-card shadow-sm border-0 h-100">
+            <div class="card custom-card shadow-sm border-0 h-100 position-relative">
                 
-                <div class="discount-strip">-20%</div>
+                @if($p->hasDiskon())
+                <div class="discount-strip">-{{ $p->diskon ?? 0 }}%</div>
+                @endif
 
                 <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1" style="z-index: 10;">
                     @if($index == 0)
@@ -180,8 +248,10 @@
                 <div class="card-body d-flex flex-column text-center text-lg-start">
                     <h5 class="fw-bold mb-1 text-dark" style="font-size: 1.1rem;">{{ $p->nama }}</h5>
                     <div class="mb-3">
-                        <span class="price-original">Rp {{ number_format($p->harga + 3000, 0, ',', '.') }}</span><br>
-                        <span class="text-orange fw-bold h5 mb-0" style="color: var(--primary-orange);">Rp {{ number_format($p->harga, 0, ',', '.') }}</span>
+                        @if($p->hasDiskon())
+                        <span class="text-muted text-decoration-line-through" style="font-size: 0.9rem;">Rp {{ number_format($p->harga, 0, ',', '.') }}</span><br>
+                        @endif
+                        <span class="text-orange fw-bold h5 mb-0" style="color: var(--primary-orange);">Rp {{ number_format($p->harga_setelah_diskon, 0, ',', '.') }}</span>
                     </div>
                     <a href="{{ route('public.produk.detail', $p->id) }}" class="btn btn-outline-warning btn-sm rounded-pill mt-auto fw-bold py-2">
                         <i class="fas fa-eye me-1"></i> Detail Menu
@@ -204,15 +274,21 @@
                 <div class="d-flex align-items-start mb-4">
                     <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                     <div>
-                        <h6 class="fw-bold mb-1">Alamat Outlet 1</h6>
-                        <p class="text-muted mb-0 small">Depan SMP Negeri 8 Kota Sungai Penuh, Jl. Yos Sudarso, Gedang, Jambi 37152</p>
+                        <h6 class="fw-bold mb-1">Outlet 1</h6>
+                        <p class="text-muted mb-2 small">Depan SMP Negeri 8 Kota Sungai Penuh, Jl. Yos Sudarso, Gedang, Jambi 37152</p>
+                        <a href="https://maps.app.goo.gl/vRxuFRp3JHuZVDzAA" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill" style="font-size: 0.75rem;">
+                            <i class="fas fa-map-marked-alt me-1"></i> Lihat di Google Maps
+                        </a>
                     </div>
                 </div>
                 <div class="d-flex align-items-start mb-4">
                     <div class="contact-icon" style="background: #6f42c1;"><i class="fas fa-rocket"></i></div>
                     <div>
                         <h6 class="fw-bold mb-1 text-purple">COMING SOON!! Outlet 2</h6>
-                        <p class="text-muted mb-0 small">Depan SMP Negeri 1 Kota Sungai Penuh, Jl. Martadinata, Gedang, Jambi 37152</p>
+                        <p class="text-muted mb-2 small">Depan SMP Negeri 1 Kota Sungai Penuh, Jl. Martadinata, Gedang, Jambi 37152</p>
+                        <a href="https://maps.app.goo.gl/dCzzC5jS69pd4y2H7" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size: 0.75rem;">
+                            <i class="fas fa-map-marked-alt me-1"></i> Lihat Lokasi
+                        </a>
                     </div>
                 </div>
                 <div class="d-flex align-items-start mb-4">
@@ -232,9 +308,21 @@
             </div>
         </div>
         <div class="col-lg-7">
-            <div class="map-container animate__animated animate__fadeInRight" style="border-radius: 30px; overflow: hidden; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                <iframe src="http://googleusercontent.com/maps.google.com/8" 
-                        width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <div class="map-container animate__animated animate__fadeInRight" style="border-radius: 30px; overflow: hidden; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;">
+                <iframe 
+                    src="https://www.google.com/maps?q=Depan+SMP+Negeri+8+Kota+Sungai+Penuh,+Jl.+Yos+Sudarso,+Gedang,+Jambi+37152&output=embed&hl=id" 
+                    width="100%" 
+                    height="400" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                <div class="text-center p-2" style="background: rgba(255,255,255,0.95); border-top: 2px solid #f0f0f0;">
+                    <a href="https://maps.app.goo.gl/vRxuFRp3JHuZVDzAA" target="_blank" class="btn btn-primary btn-sm rounded-pill">
+                        <i class="fas fa-external-link-alt me-1"></i> Buka di Google Maps
+                    </a>
+                </div>
             </div>
         </div>
     </div>

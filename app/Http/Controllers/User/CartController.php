@@ -74,6 +74,9 @@ class CartController extends Controller
     // ================= PROSES CHECKOUT (DIPERBARUI DENGAN CEK STOK AKHIR) =================
     public function processCheckout(Request $request)
     {
+        // Validasi payment_method
+        $request->validate(['payment_method' => 'required|in:midtrans,cash']);
+        
         $cartItems = session()->get('cart', []);
         if (empty($cartItems)) {
             return response()->json(['error' => 'Keranjang kosong'], 400);
@@ -90,12 +93,14 @@ class CartController extends Controller
         }
 
         $total = collect($cartItems)->sum(fn($item) => $item['price'] * $item['quantity']);
+        $metodePembayaran = $request->payment_method;
 
-        // 1. Simpan ke tabel orders
+        // 1. Simpan ke tabel orders dengan metode_pembayaran
         $order = Order::create([
             'user_id' => auth()->id(),
-            'status' => 'pending',
+            'status' => ($metodePembayaran === 'cash') ? 'baru' : 'pending',
             'total_price' => $total,
+            'metode_pembayaran' => $metodePembayaran,
         ]);
 
         // 2. Simpan item detail
@@ -107,7 +112,18 @@ class CartController extends Controller
             ]);
         }
 
-        // 3. Konfigurasi Midtrans
+        // 3. Kosongkan keranjang setelah order dibuat
+        session()->forget('cart');
+
+        // 4. Jika Cash, langsung return redirect tanpa Midtrans
+        if ($metodePembayaran === 'cash') {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('user.orders.index')
+            ]);
+        }
+
+        // 5. Jika Midtrans, buat snap token
         Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION') === 'true';
         Config::$isSanitized  = env('MIDTRANS_SANITIZED', true);
@@ -126,13 +142,13 @@ class CartController extends Controller
             ];
 
             $snapToken = Snap::getSnapToken($params);
-
-            // 4. Kosongkan keranjang setelah token didapat
-            session()->forget('cart');
+            
+            // Update order dengan snap_token
+            $order->update(['snap_token' => $snapToken]);
 
             return response()->json([
                 'snapToken' => $snapToken,
-                'orderId' => $order->id
+                'order_id' => $order->id
             ]);
 
         } catch (Exception $e) {

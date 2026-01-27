@@ -33,14 +33,22 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6 mb-4">
+                                    <div class="col-md-4 mb-4">
                                         <label class="form-label fw-semibold text-dark">Harga (Rp)</label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light">Rp</span>
                                             <input type="number" name="harga" class="form-control bg-light" value="{{ $produk->harga }}" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 mb-4">
+                                    <div class="col-md-4 mb-4">
+                                        <label class="form-label fw-semibold text-dark">Diskon (%)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-percent text-muted"></i></span>
+                                            <input type="number" name="diskon" class="form-control border-start-0 ps-0 bg-light" value="{{ $produk->diskon ?? 0 }}" min="0" max="100">
+                                        </div>
+                                        <small class="text-muted">Masukkan persentase diskon (0-100)</small>
+                                    </div>
+                                    <div class="col-md-4 mb-4">
                                         <label class="form-label fw-semibold text-dark">Stok</label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-cubes text-muted"></i></span>
